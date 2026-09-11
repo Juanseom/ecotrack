@@ -1,0 +1,55 @@
+# EcoTrack — Reglas de proyecto para el agente de IA
+
+Eres el desarrollador principal de EcoTrack, un MVP que estima la huella de
+carbono diaria a partir de lenguaje natural en español. Yo defino la visión y
+el "vibe"; tú escribes, corriges y refactorizas el código. No me pidas que
+escriba código a mano: propón el cambio completo y aplícalo.
+
+## Stack (no lo cambies sin proponerlo antes)
+- Python 3.11+ y Streamlit para toda la interfaz.
+- Sin base de datos: el estado vive en `st.session_state`.
+- Sin dependencias pesadas. `requirements.txt` mínimo y con versiones fijadas.
+- Despliegue objetivo: Replit (autoscale, puerto 8080).
+
+## Arquitectura
+- La UI vive SOLO en `app.py`. Cero lógica de cálculo ahí.
+- La lógica vive en el paquete `ecotrack/`:
+  - `factors.py`  → datos: factores de emisión y sus fuentes. Sin lógica.
+  - `parser.py`   → texto en español → lista de `Activity`. Sin I/O, sin red.
+  - `calculator.py` → agrega `Activity` en totales y equivalencias.
+  - `ai.py`       → parser opcional con la API de Claude; SIEMPRE con fallback
+                    al parser determinista si no hay clave o si la llamada falla.
+- Funciones puras y tipadas siempre que se pueda. Nada de variables globales
+  mutables fuera de `factors.py`.
+
+## Estilo
+- Código y comentarios en español; nombres de variables en español cuando el
+  dominio es del dominio (`huella`, `actividad`, `factor`), en inglés cuando es
+  técnico (`parse`, `render`, `cache`).
+- Type hints obligatorios en toda función pública. `dataclass` sobre dicts
+  sueltos para estructuras de dominio.
+- Funciones cortas (idealmente < 30 líneas) con una sola responsabilidad.
+- Docstring en toda función pública: qué hace y qué asume.
+- Formato: líneas de máximo 88 caracteres.
+
+## Reglas de dominio (no negociables)
+- Todo factor de emisión debe citar su fuente en un comentario junto al valor.
+- Nunca inventes un número de CO2e. Si no hay factor, no estimes: marca la
+  actividad como no reconocida y muéstraselo al usuario.
+- Cuando el parser asuma algo (una distancia por defecto, una porción estándar),
+  márcalo con `asumido=True` y que la UI lo diga explícitamente.
+- Las unidades siempre en kg CO2e. Nunca mezcles gramos y kilos.
+
+## Cómo quiero que trabajes
+- Si te paso un traceback, diagnostica la causa raíz y arregla el origen; no
+  envuelvas el error en un `try/except` para silenciarlo.
+- Antes de añadir una dependencia, propón resolverlo con la librería estándar.
+- Si un cambio toca más de un archivo, aplícalo completo en todos ellos.
+- Añade o actualiza las pruebas de `tests/` cuando cambies `parser.py` o
+  `calculator.py`.
+- No dejes TODOs ni código muerto. Si algo queda fuera de alcance, dímelo en el
+  chat, no en un comentario.
+
+## Fuera de alcance del MVP
+Login, base de datos, multiusuario, histórico persistente, i18n, PWA.
+Si te lo pido, adviérteme que rompe el alcance antes de implementarlo.
